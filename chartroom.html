@@ -81,6 +81,9 @@ main{flex:1;min-height:0;display:flex}
 .arow button:hover{color:#f0524f}
 .arow .k{color:var(--mute)}
 #alPop{width:330px}
+#alPop .f2{display:flex;flex-direction:column;gap:3px;margin-bottom:8px;font-size:12px}
+#alPop .f2 input{height:28px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:0 8px;min-width:0;width:100%}
+#alPop .inl{display:flex;gap:6px} #alPop .inl .btn{margin-top:0;height:28px;flex:0 0 auto}
 #alPop .btn{height:26px;font-size:12px;margin-top:4px}
 .toasts{position:absolute;top:48px;right:86px;z-index:5;display:flex;flex-direction:column;gap:6px;max-width:min(360px,calc(100% - 110px))}
 .toast{display:flex;gap:8px;align-items:flex-start;background:#f5d547;color:#1a1405;border-radius:8px;padding:8px 8px 8px 12px;font-weight:600;box-shadow:0 8px 20px #0008}
@@ -225,7 +228,8 @@ body{overscroll-behavior:none}
 <div class="pop" id="alPop" hidden>
   <h3>가격 알림 추가 · <span id="alSym"></span></h3>
   <form id="alForm" class="tfrow"><input type="number" id="alP" step="any" min="0" aria-label="알림 가격" placeholder="가격"><button class="btn" type="submit">추가</button></form>
-  <p class="hint">차트에서 Alt+클릭해도 그 가격에 추가됩니다. 선에 닿을 때 알림은 선을 선택하고 위쪽 막대의 "알림"을 누르세요.</p>
+  <label><input type="checkbox" id="alRep">반복해서 울리기 (끄면 1번만)</label>
+  <p class="hint">차트에서 Alt+클릭해도 그 가격에 추가됩니다. 선에 닿을 때 알림은 선을 선택하고 위쪽 막대의 "알림" 버튼을 누르세요. 누를 때마다 끔 → 1번 → 반복으로 바뀝니다. 반복 알림은 같은 알림이 1분에 한 번까지만 울립니다.</p>
   <h3>켜진 알림</h3><div id="alList"></div>
   <h3>최근 울린 알림</h3><div id="alLog"></div>
   <button class="btn" type="button" id="alClr" hidden>기록 지우기</button>
@@ -234,6 +238,12 @@ body{overscroll-behavior:none}
   <label><input type="checkbox" id="alDesk">바탕화면 알림</label>
   <p class="hint" id="alDeskNote"></p>
   <button class="btn" type="button" id="alTest">시험 알림 울려 보기</button>
+  <h3>폰으로 보내기 (이 기기가 켜져 있을 때)</h3>
+  <div class="f2"><label for="tgToken">텔레그램 봇 토큰</label><input type="text" id="tgToken" autocomplete="off" spellcheck="false" placeholder="123456789:AA…"></div>
+  <div class="f2"><label for="tgChat">텔레그램 대화방 번호</label><span class="inl"><input type="text" id="tgChat" autocomplete="off" spellcheck="false" inputmode="numeric" placeholder="예: 123456789"><button class="btn" type="button" id="tgFind">찾기</button></span></div>
+  <div class="f2"><label for="ntfyTopic">ntfy 주제 (텔레그램 대신 쓸 때)</label><input type="text" id="ntfyTopic" autocomplete="off" spellcheck="false" placeholder="남이 못 맞힐 긴 이름"></div>
+  <button class="btn" type="button" id="pushTest">폰으로 시험 전송</button>
+  <p class="hint" id="pushNote"></p>
   <p class="hint">알림은 이 차트 창이 열려 있는 동안에만 울립니다. 지금 열어 둔 종목과 관심종목에 있는 코인을 지켜봅니다.</p>
 </div>
 <div class="pop" id="tfPop" hidden>
@@ -260,7 +270,7 @@ body{overscroll-behavior:none}
       <button class="btn" type="button" id="dXr" aria-pressed="false" title="선을 오른쪽으로 끝까지 늘립니다" hidden>확장 →</button>
       <input type="text" id="dLv" aria-label="피보나치 값 (쉼표로 구분)" title="피보나치 값을 쉼표로 구분해 입력하고 Enter. 비우면 기본값" placeholder="0, 0.5, 1, 1.618" hidden>
       <input type="text" id="dTxt" aria-label="글자" placeholder="글자 입력" hidden>
-      <button class="btn" type="button" id="dAl" aria-pressed="false" title="가격이 이 선에 닿으면 알림을 울립니다" hidden>알림</button>
+      <button class="btn" type="button" id="dAl" aria-pressed="false" title="가격이 이 선에 닿으면 알림을 울립니다. 누를 때마다 끔 → 1번 → 반복" hidden>알림: 끔</button>
       <button class="btn" type="button" id="dDel">지우기</button>
       <div class="parts" id="dParts" hidden></div>
     </div>
@@ -334,7 +344,7 @@ const DEF_TFS=['1m','5m','15m','1h','4h','1d','1w'];
 const KEY='chartroom.v1';
 const DEF_IND=()=>({ ma:[{p:5,on:false},{p:20,on:true},{p:60,on:true},{p:120,on:false},{p:200,on:false}], bb:{on:false,p:20,k:2}, vol:true,
   hma:true, ichi:false, vwap:false, vwapP:'M', vrvp:false, fvg:true, fvgFill:'close', key:true, rsi:{on:false,p:14}, macd:{on:false}, cvd:true, oi:true });
-const S={ symbol:'BINANCE:BTCUSDT', tf:'1h', tfs:DEF_TFS.slice(), color:'kr', dstyle:{col:'#e8a33d',w:1.5}, magnet:0, fibdef:{}, paneH:{}, alerts:[], alog:[], alertOpt:{sound:true,desk:false},
+const S={ symbol:'BINANCE:BTCUSDT', tf:'1h', tfs:DEF_TFS.slice(), color:'kr', dstyle:{col:'#e8a33d',w:1.5}, magnet:0, fibdef:{}, paneH:{}, push:{tgToken:'',tgChat:'',ntfy:''}, alerts:[], alog:[], alertOpt:{sound:true,desk:false},
   ind:null, col:null,
   watch:['BINANCE:BTCUSDT','BINANCEF:BTCUSDT','BINANCE:ETHUSDT','BINANCE:SOLUSDT','BINANCE:XRPUSDT','US:AAPL','US:NVDA','US:TSLA','DEMO:SAMPLE'],
   keys:{td:'',fh:''}, drawings:{} };
@@ -344,7 +354,7 @@ const DEF_COL=()=>({ma0:'#e8a33d',ma1:'#a78bfa',ma2:'#4cc3d9',ma3:'#8fd16a',ma4:
   ten:'#4c9bf5',kij:'#c96a5b',spa:'#3ecf8e',spb:'#f0524f',chi:'#8fd16a',fvgUp:S.color==='global'?'#2bb48a':'#f0524f',fvgDn:S.color==='global'?'#f0524f':'#3d7ff5',key:'#d9dee8',rsi:'#a78bfa',macd:'#4cc3d9',sig:'#e8a33d',cvd:'#8fd16a',oi:'#e8a33d'});
 { const d=DEF_COL(), u=S.col&&typeof S.col==='object'?S.col:{}; for(const k in d) if(/^#[0-9a-f]{6}$/i.test(u[k]||'')) d[k]=u[k]; S.col=d; }
 let K=S.col;
-S.magnet=S.magnet===true?1:([1,2].includes(S.magnet)?S.magnet:0); if(!S.fibdef||typeof S.fibdef!=='object') S.fibdef={}; if(!S.paneH||typeof S.paneH!=='object') S.paneH={}; if(!Array.isArray(S.alerts)) S.alerts=[]; if(!Array.isArray(S.alog)) S.alog=[]; if(!S.alertOpt||typeof S.alertOpt!=='object') S.alertOpt={sound:true,desk:false};
+S.magnet=S.magnet===true?1:([1,2].includes(S.magnet)?S.magnet:0); if(!S.fibdef||typeof S.fibdef!=='object') S.fibdef={}; if(!S.paneH||typeof S.paneH!=='object') S.paneH={}; S.push=Object.assign({tgToken:'',tgChat:'',ntfy:''},S.push&&typeof S.push==='object'?S.push:{}); if(!Array.isArray(S.alerts)) S.alerts=[]; if(!Array.isArray(S.alog)) S.alog=[]; if(!S.alertOpt||typeof S.alertOpt!=='object') S.alertOpt={sound:true,desk:false};
 if(!S.dstyle||!/^#[0-9a-f]{6}$/i.test(S.dstyle.col||'')||!(S.dstyle.w>0)) S.dstyle={col:'#e8a33d',w:1.5};
 const tfMs=()=>tfParse(S.tf).ms;
 var CLOUD=null;
@@ -466,7 +476,7 @@ function render(){
   if(IND.ichi){ const q=IND.ichi; line(q.ten,i0,i1,Y,K.ten,1); line(q.kij,i0,i1,Y,K.kij,1); line(q.a,i0,i1,Y,K.spa+'99',1,q.disp); line(q.b,i0,i1,Y,K.spb+'99',1,q.disp); line(q.chi,i0,i1,Y,K.chi,1,-q.disp); }
   if(S.ind.key){ const rowsK=new Map(); for(const k of EX.levels){ const y=Math.round(Y(k.p))+.5; if(y<main.y||y>main.y+main.h) continue; const xa=Math.max(0,X(iOfT(k.t))); if(xa>=plotW) continue; const g=rowsK.get(y); if(g){ g.lb+=' · '+k.lb; g.xa=Math.min(g.xa,xa); } else rowsK.set(y,{lb:k.lb,p:k.p,xa}); }
     for(const [y,g] of rowsK){ c.strokeStyle=K.key+'88'; c.lineWidth=1; c.beginPath(); c.moveTo(g.xa,y); c.lineTo(plotW,y); c.stroke(); c.fillStyle=K.key+'cc'; c.textAlign='right'; c.fillText(`${g.lb}  ${fmtP(g.p)}`,plotW-6,y-7); } }
-  for(const a of S.alerts){ if(!a.on||a.sym!==S.symbol) continue; const y=Math.round(Y(a.price))+.5; if(y<main.y||y>main.y+main.h) continue; c.setLineDash([6,4]); c.strokeStyle=ALC; c.lineWidth=1; c.beginPath(); c.moveTo(0,y); c.lineTo(plotW,y); c.stroke(); c.setLineDash([]); c.fillStyle=ALC; c.textAlign='right'; c.fillText(`알림  ${fmtP(a.price)}`,plotW-6,y-7); }
+  for(const a of S.alerts){ if(!a.on||a.sym!==S.symbol) continue; const y=Math.round(Y(a.price))+.5; if(y<main.y||y>main.y+main.h) continue; c.setLineDash([6,4]); c.strokeStyle=ALC; c.lineWidth=1; c.beginPath(); c.moveTo(0,y); c.lineTo(plotW,y); c.stroke(); c.setLineDash([]); c.fillStyle=ALC; c.textAlign='right'; c.fillText(`알림${a.rep?' · 반복':''}  ${fmtP(a.price)}`,plotW-6,y-7); }
   const last=bars[n-1], lc=last.c>=last.o?C.up:C.down, ly=Math.round(Y(last.c))+.5;
   c.setLineDash([2,3]); c.strokeStyle=lc; c.beginPath(); c.moveTo(0,ly); c.lineTo(plotW,ly); c.stroke(); c.setLineDash([]);
   for(const d of curDraw()) drawShape(d,d===sel); if(pending) drawShape(pending,true); if(meas) drawMeasure();
@@ -531,7 +541,9 @@ function segDist(px,py,ax,ay,bx,by){ const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy; let 
 function inPoly(ps,x,y){ let r=false; for(let i=0,j=ps.length-1;i<ps.length;j=i++){ const [xi,yi]=ps[i],[xj,yj]=ps[j]; if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi) r=!r; } return r; }
 let TOUCH=false; const HR=()=>TOUCH?14:6;   // 손가락은 마우스보다 넓게 잡아 준다
 function seg(x0,y0,x1,y1){ if(G.hit){ if(segDist(G.mx,G.my,x0,y0,x1,y1)<HR()) G.found=true; return; } ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); }
-function far(x0,y0,x1,y1){ const dx=x1-x0,dy=y1-y0,k=6000/(Math.hypot(dx,dy)||1); return [x1+dx*k,y1+dy*k]; }
+/* (x0,y0)→(x1,y1) 방향으로 화면 밖까지 늘린 끝점. 예전엔 6000픽셀만 늘려서, 확대한 상태에서 멀리 왼쪽에 그린 선은 오른쪽 끝에 닿지 못했다 */
+function far(x0,y0,x1,y1){ const dx=x1-x0,dy=y1-y0; if(!dx&&!dy) return [x1,y1]; const M=200, edge=(p,d,lo,hi)=>d>0?(hi-p)/d:d<0?(lo-p)/d:Infinity;
+  const t=Math.min(edge(x1,dx,-M,L.W+M),edge(y1,dy,-M,L.H+M)); return t>0&&isFinite(t)?[x1+dx*t,y1+dy*t]:[x1,y1]; }
 function ray(x0,y0,x1,y1){ const f=far(x0,y0,x1,y1); seg(x0,y0,f[0],f[1]); }
 function both(x0,y0,x1,y1){ const a=far(x1,y1,x0,y0), b=far(x0,y0,x1,y1); seg(a[0],a[1],b[0],b[1]); }
 function area(ps,fill){ if(G.hit||ps.length<3) return; ctx.save(); ctx.fillStyle=fill; ctx.beginPath(); ps.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])); ctx.closePath(); ctx.fill(); ctx.restore(); }
@@ -603,7 +615,7 @@ function shape(d,s,col){ const W=L.plotW, top=L.main.y, bot=L.main.y+L.main.h, P
     case 'dprange': { const mx=(x0+x1)/2,my=(y0+y1)/2; box(x0,y0,x1,y1,soft); seg(mx,y0,mx,y1); head(mx,y0,mx,y1); seg(x0,my,x1,my); head(x0,my,x1,my); tx(stat(P[0],P[1]),mx,y1+(y1<=y0?-13:13),'center',col); break; }
   } }
 function screenPts(d){ const s=d.pts.map(XY); if((d.type==='long'||d.type==='short')&&s[2]) s[2][0]=s[1][0]; return s; }
-function drawShape(d,active){ const c=ctx, col=d.col||C.accent, w=d.w||1.5, s=screenPts(d); c.save(); c.strokeStyle=col; c.fillStyle=col; c.lineWidth=active?w+0.7:w; c.lineJoin='round'; c.lineCap='round'; G.hit=false; shape(d,s,col); c.setLineDash([]); if(d.alert&&AT.has(d.type)){ c.save(); c.font='10px '+UIF; c.fillStyle=ALC; c.textAlign='left'; c.fillText('알림',s[0][0]+7,s[0][1]+13); c.restore(); }
+function drawShape(d,active){ const c=ctx, col=d.col||C.accent, w=d.w||1.5, s=screenPts(d); c.save(); c.strokeStyle=col; c.fillStyle=col; c.lineWidth=active?w+0.7:w; c.lineJoin='round'; c.lineCap='round'; G.hit=false; shape(d,s,col); c.setLineDash([]); if(d.alert&&AT.has(d.type)){ c.save(); c.font='10px '+UIF; c.fillStyle=ALC; c.textAlign='left'; c.fillText(d.alert==='rep'?'알림 · 반복':'알림 · 1번',s[0][0]+7,s[0][1]+13); c.restore(); }
   if(active&&d.type!=='brush'){ c.fillStyle=C.bg; c.strokeStyle=col; c.lineWidth=1.5; const hs=d.type==='hline'?[[L.plotW/2,s[0][1]]]:d.type==='vline'?[[s[0][0],L.main.y+L.main.h/2]]:s; for(const [hx,hy] of hs){ c.beginPath(); c.arc(hx,hy,TOUCH?6:4,0,7); c.fill(); c.stroke(); } } c.restore(); }
 function hitTest(mx,my){ const ds=curDraw(); for(let k=ds.length-1;k>=0;k--){ const d=ds[k], s=screenPts(d);
     if(d.type!=='brush'&&d.type!=='hline'&&d.type!=='vline') for(let q=0;q<s.length;q++) if(Math.hypot(mx-s[q][0],my-s[q][1])<(TOUCH?20:8)) return {d,part:q};
@@ -621,7 +633,7 @@ function delSel(){ if(!sel) return; pushUndo(); const a=curDraw(); a.splice(a.in
 function syncSbar(){ sbarSel=sel; styleEditing=false; $('sbar').hidden=!sel; if(!sel) return; $('dCol').value=/^#[0-9a-f]{6}$/i.test(sel.col||'')?sel.col:'#e8a33d'; $('dW').value=String(sel.w||1.5); const t='text' in sel; $('dTxt').hidden=!t; $('dTxt').value=t?sel.text:''; if(t&&focusTxt) setTimeout(()=>{ $('dTxt').focus(); $('dTxt').select(); },0); focusTxt=false;
   const xt=XT.has(sel.type); $('dXl').hidden=$('dXr').hidden=!xt; $('dXl').setAttribute('aria-pressed',!!sel.xl); $('dXr').setAttribute('aria-pressed',xrOn(sel)); const lo=!!DEFLV[sel.type]; $('dLv').hidden=!lo; if(lo) $('dLv').value=lv(sel).join(', '); const ps=partsOf(sel), base=/^#[0-9a-f]{6}$/i.test(sel.col||'')?sel.col:'#e8a33d'; $('dParts').hidden=!ps;
   if(ps) $('dParts').innerHTML='<span class="pt">부분별 색</span>'+ps.map(([k,lb])=>`<label class="pc"><input type="color" data-part="${k}" value="${(sel.lc&&sel.lc[k])||base}" aria-label="${lb} 색"><span>${lb}</span></label>`).join('')+(sel.lc&&Object.keys(sel.lc).length?'<button class="btn" type="button" id="dPartsClr" title="부분별 색을 지우고 전체 색 하나로 되돌립니다">한 색으로</button>':'');
-  const al=AT.has(sel.type); $('dAl').hidden=!al; $('dAl').setAttribute('aria-pressed',!!sel.alert); }
+  const al=AT.has(sel.type); $('dAl').hidden=!al; $('dAl').setAttribute('aria-pressed',!!sel.alert); $('dAl').textContent=sel.alert==='rep'?'알림: 반복':sel.alert?'알림: 1번':'알림: 끔'; }
 function editSel(fn){ if(!sel) return; if(!styleEditing){ pushUndo(); styleEditing=true; } dSide.delete(sel); fn(sel); save(); dirty=true; }
 function hint(){ let t=''; if(tool==='measure'||(meas&&!meas.done)) t=meas&&!meas.done?'재기: 끝 지점을 클릭하세요 · Esc 취소':'재기: 시작 지점을 클릭하세요 · 커서 상태에서 Shift+클릭으로도 잴 수 있습니다';
   else if(T[tool]){ const n=T[tool].n, k=pending?pending.pts.length-1:0; t=T[tool].lb+': '+(n===0?'클릭으로 점을 추가하고 더블클릭이나 Enter로 끝냅니다':n===-1?'누른 채로 그리세요':n===1?'놓을 곳을 클릭하세요':`점 ${n}개를 차례로 찍으세요 (${Math.min(k,n)}/${n})`)+' · Esc 취소'; }
@@ -629,7 +641,7 @@ function hint(){ let t=''; if(tool==='measure'||(meas&&!meas.done)) t=meas&&!mea
 
 /* ───────── 알림 ───────── */
 const AT=new Set(['hline','hray','trend','ray','extended','info','channel','fib','fibext']), ALC='#f5d547';
-const aSide=new Map(), dSide=new WeakMap(); let actx=null;
+const aSide=new Map(), dSide=new WeakMap(), aFired=new Map(), dFired=new WeakMap(), REPEAT_GAP=6e4; let actx=null;   // 반복 알림은 같은 알림이 1분 안에 다시 울리지 않게 한다
 /* 그림이 시각 t에 가리키는 가격들. 선은 오른쪽으로 계속 이어진 것으로 본다 */
 function alertLevels(d,t,cur){ const P=d.pts, pos=q=>cur?iOfT(q):q, x=pos(t), at=(A,B,xx)=>{ const a=pos(A.t), b=pos(B.t); return a===b?null:A.p+(B.p-A.p)*(xx-a)/(b-a); };
   switch(d.type){
@@ -649,19 +661,25 @@ function setTitle(force){ const now=Date.now(); if(!force&&now-titleAt<1000) ret
 function beep(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); const t0=actx.currentTime;
     [0,0.22,0.44].forEach((dt,k)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=k===2?1175:880; g.gain.setValueAtTime(0.0001,t0+dt); g.gain.exponentialRampToValueAtTime(0.25,t0+dt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+dt+0.18); o.connect(g).connect(actx.destination); o.start(t0+dt); o.stop(t0+dt+0.2); }); }catch(e){} }
 function toast(msg){ const box=$('toasts'), el=document.createElement('div'); el.className='toast'; el.innerHTML='<span></span><button type="button" aria-label="닫기">×</button>'; el.firstChild.textContent=msg; el.lastChild.onclick=()=>el.remove(); box.prepend(el); while(box.children.length>5) box.lastChild.remove(); }
-function fire(sym,price,text){ const msg=`${dispName(sym)} · ${text} · 현재가 ${fmtP(price)}`; S.alog.unshift({t:Date.now(),msg}); if(S.alog.length>30) S.alog.length=30; toast(msg); if(S.alertOpt.sound) beep();
+/* 폰으로 보내기: 텔레그램 봇(응답은 읽지 않고 보내기만 한다)과 ntfy. 이 기기에만 저장되고 동기화하지 않는다 */
+const tgUrl=(method,q)=>`https://api.telegram.org/bot${encodeURIComponent(S.push.tgToken.trim()).replace(/%3A/gi,':')}/${method}${q?'?'+q:''}`;
+function pushPhone(msg){ const u=S.push; let n=0;
+  if(u.tgToken.trim()&&String(u.tgChat).trim()){ n++; fetch(tgUrl('sendMessage',`chat_id=${encodeURIComponent(String(u.tgChat).trim())}&text=${encodeURIComponent(msg)}`),{mode:'no-cors',cache:'no-store'}).catch(()=>{}); }
+  if(u.ntfy.trim()){ n++; fetch('https://ntfy.sh/'+encodeURIComponent(u.ntfy.trim()),{method:'POST',body:msg}).catch(()=>{}); }
+  return n; }
+function fire(sym,price,text){ const msg=`${dispName(sym)} · ${text} · 현재가 ${fmtP(price)}`; S.alog.unshift({t:Date.now(),msg}); if(S.alog.length>30) S.alog.length=30; toast(msg); if(S.alertOpt.sound) beep(); pushPhone('[차트룸] '+msg);
   if(S.alertOpt.desk){ try{ if('Notification' in window&&Notification.permission==='granted') new Notification('차트룸 알림',{body:msg}); }catch(e){} } if(document.hidden){ titleAlert=true; setTitle(true); } }
 /* 시세가 들어올 때마다 부른다. 가격이 기준을 건너가거나 정확히 닿으면 한 번 울리고 꺼진다 */
 function checkAlerts(sym,price){ if(!(price>0)) return; const now=Date.now(); let ch=false;
-  for(const a of S.alerts){ if(!a.on||a.sym!==sym) continue; const sd=Math.sign(price-a.price), pv=aSide.get(a.id); aSide.set(a.id,sd); if(sd===0||(pv!==undefined&&pv!==sd)){ a.on=false; fire(sym,price,`가격 ${fmtP(a.price)} 도달`); ch=true; } }
+  for(const a of S.alerts){ if(!a.on||a.sym!==sym) continue; const sd=Math.sign(price-a.price), pv=aSide.get(a.id); aSide.set(a.id,sd); if(sd===0||(pv!==undefined&&pv!==sd)){ if(a.rep){ if(now-(aFired.get(a.id)||0)<REPEAT_GAP) continue; aFired.set(a.id,now); } else a.on=false; fire(sym,price,`가격 ${fmtP(a.price)} 도달`+(a.rep?' · 반복 알림':'')); ch=true; } }
   const ds=S.drawings[sym]; if(ds) for(const d of ds){ if(!d.alert||!AT.has(d.type)||(d===sel&&drag?.move)) continue; const lvls=alertLevels(d,now,sym===S.symbol&&bars.length>1), sides=lvls.map(v=>Math.sign(price-v)), pv=dSide.get(d); dSide.set(d,sides);
-    const same=pv&&pv.length===sides.length, k=sides.findIndex((sd,j)=>sd===0||(same&&pv[j]!==sd)); if(k>=0){ d.alert=false; fire(sym,price,`${T[d.type].lb}에 닿음 (${fmtP(lvls[k])})`); ch=true; } }
+    const same=pv&&pv.length===sides.length, k=sides.findIndex((sd,j)=>sd===0||(same&&pv[j]!==sd)); if(k>=0){ const rp=d.alert==='rep'; if(rp){ if(now-(dFired.get(d)||0)<REPEAT_GAP) continue; dFired.set(d,now); } else d.alert=false; fire(sym,price,`${T[d.type].lb}에 닿음 (${fmtP(lvls[k])})`+(rp?' · 반복 알림':'')); ch=true; } }
   if(ch){ save(); dirty=true; renderAlerts(); if(sel) syncSbar(); } }
 function lastPrice(sym){ return sym===S.symbol&&bars.length?bars[bars.length-1].c:(Q[sym]&&Q[sym].p)||null; }
-function addAlert(sym,price){ if(!(price>0)) return; const a={id:Date.now()+Math.floor(Math.random()*1e3),sym,price,on:true}; S.alerts.push(a); const cp=lastPrice(sym); if(cp!=null) aSide.set(a.id,Math.sign(cp-price)); save(); renderAlerts(); dirty=true; }
+function addAlert(sym,price,rep){ if(!(price>0)) return; const a={id:Date.now()+Math.floor(Math.random()*1e3),sym,price,on:true}; if(rep) a.rep=true; S.alerts.push(a); const cp=lastPrice(sym); if(cp!=null) aSide.set(a.id,Math.sign(cp-price)); save(); renderAlerts(); dirty=true; }
 function renderAlerts(){ const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); let h='', n=0;
-  for(const a of S.alerts) if(a.on){ n++; h+=`<div class="arow"><span>${esc(dispName(a.sym))} · 가격 ${fmtP(a.price)}</span><button type="button" data-adel="${a.id}" title="알림 지우기" aria-label="알림 지우기">×</button></div>`; }
-  for(const sym in S.drawings) S.drawings[sym].forEach((d,k)=>{ if(d.alert&&T[d.type]){ n++; h+=`<div class="arow"><span>${esc(dispName(sym))} · ${T[d.type].lb}에 닿을 때</span><button type="button" data-doff="${esc(sym)}|${k}" title="알림 끄기" aria-label="알림 끄기">×</button></div>`; } });
+  for(const a of S.alerts) if(a.on){ n++; h+=`<div class="arow"><span>${esc(dispName(a.sym))} · 가격 ${fmtP(a.price)} · ${a.rep?'반복':'1번'}</span><button type="button" data-adel="${a.id}" title="알림 지우기" aria-label="알림 지우기">×</button></div>`; }
+  for(const sym in S.drawings) S.drawings[sym].forEach((d,k)=>{ if(d.alert&&T[d.type]){ n++; h+=`<div class="arow"><span>${esc(dispName(sym))} · ${T[d.type].lb}에 닿을 때 · ${d.alert==='rep'?'반복':'1번'}</span><button type="button" data-doff="${esc(sym)}|${k}" title="알림 끄기" aria-label="알림 끄기">×</button></div>`; } });
   if(!n) h='<p class="hint">켜진 알림이 없습니다.</p>';
   let g=S.alog.map(x=>{ const d=new Date(x.t); return `<div class="arow"><span><span class="k">${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}</span> ${esc(x.msg)}</span></div>`; }).join('');
   $('alList').innerHTML=h; $('alLog').innerHTML=g||'<p class="hint">아직 울린 알림이 없습니다.</p>'; $('alClr').hidden=!S.alog.length; $('alBtn').textContent=n?`알림 ${n}`:'알림'; $('alSym').textContent=dispName(S.symbol); }
@@ -919,11 +937,11 @@ function buildUI(){
   $('dParts').addEventListener('change',e=>{ if(e.target.dataset.part==null) return; styleEditing=false; e.target.blur(); syncSbar(); });
   $('dParts').addEventListener('click',e=>{ if(e.target.id!=='dPartsClr') return; editSel(d=>{ delete d.lc; }); syncSbar(); });
   $('dCol').addEventListener('change',()=>syncSbar());
-  $('dAl').addEventListener('click',()=>{ editSel(d=>{ d.alert=!d.alert; }); styleEditing=false; syncSbar(); renderAlerts(); });
+  $('dAl').addEventListener('click',()=>{ editSel(d=>{ d.alert=!d.alert?true:d.alert==='rep'?false:'rep'; }); styleEditing=false; syncSbar(); renderAlerts(); });   // 끔 → 1번 → 반복 → 끔
   const ap=$('alPop');
   $('alBtn').addEventListener('click',()=>{ const r=$('alBtn').getBoundingClientRect(); ap.style.left=Math.max(8,Math.min(r.left,innerWidth-340))+'px'; ap.style.top=(r.bottom+6)+'px'; ap.hidden=!ap.hidden; $('alBtn').setAttribute('aria-expanded',!ap.hidden); if(!ap.hidden){ const cp=lastPrice(S.symbol); if(cp&&!$('alP').value) $('alP').value=+cp.toPrecision(7); renderAlerts(); } });
   addEventListener('pointerdown',e=>{ if(!ap.hidden&&!ap.contains(e.target)&&e.target!==$('alBtn')){ ap.hidden=true; $('alBtn').setAttribute('aria-expanded','false'); } try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(_){} });
-  $('alForm').addEventListener('submit',e=>{ e.preventDefault(); const v=+$('alP').value; if(v>0){ addAlert(S.symbol,v); $('alP').value=''; } });
+  $('alForm').addEventListener('submit',e=>{ e.preventDefault(); const v=+$('alP').value; if(v>0){ addAlert(S.symbol,v,$('alRep').checked); $('alP').value=''; } });
   ap.addEventListener('click',e=>{ const a=e.target.closest('[data-adel]'), d=e.target.closest('[data-doff]');
     if(a){ S.alerts=S.alerts.filter(x=>String(x.id)!==a.dataset.adel); save(); renderAlerts(); dirty=true; }
     if(d){ const [sym,k]=d.dataset.doff.split('|'); const dr=(S.drawings[sym]||[])[+k]; if(dr){ dr.alert=false; save(); renderAlerts(); dirty=true; if(sel) syncSbar(); } }
@@ -933,6 +951,13 @@ function buildUI(){
   $('alDesk').addEventListener('change',e=>{ const off=t=>{ S.alertOpt.desk=false; e.target.checked=false; $('alDeskNote').textContent=t; save(); }; S.alertOpt.desk=e.target.checked; $('alDeskNote').textContent=''; save(); if(!e.target.checked) return;
     if(!('Notification' in window)) return off('이 브라우저는 바탕화면 알림을 지원하지 않습니다.'); try{ Promise.resolve(Notification.requestPermission()).then(r=>{ if(r!=='granted') off('브라우저가 바탕화면 알림을 허용하지 않았습니다. 화면 안 알림과 소리는 그대로 동작합니다.'); }).catch(()=>off('바탕화면 알림을 켜지 못했습니다.')); }catch(_){ off('바탕화면 알림을 켜지 못했습니다.'); } });
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ titleAlert=false; setTitle(true); } });
+  for(const [id,k] of [['tgToken','tgToken'],['tgChat','tgChat'],['ntfyTopic','ntfy']]){ $(id).value=S.push[k]||''; $(id).addEventListener('change',e=>{ S.push[k]=e.target.value.trim(); saveLocal(); }); }
+  const pn=t=>{ $('pushNote').textContent=t; };
+  $('tgFind').addEventListener('click',async()=>{ S.push.tgToken=$('tgToken').value.trim(); saveLocal(); if(!S.push.tgToken) return pn('먼저 봇 토큰을 넣어 주세요.'); pn('찾는 중…');
+    try{ const j=await (await fetch(tgUrl('getUpdates'),{cache:'no-store'})).json(); if(!j.ok) return pn('토큰이 맞지 않습니다. BotFather가 준 토큰을 그대로 붙여 넣었는지 확인해 주세요.'); const ids=(j.result||[]).map(x=>(x.message||x.edited_message||x.channel_post||{}).chat).filter(Boolean);
+      if(!ids.length) return pn('받은 메시지가 없습니다. 텔레그램에서 내 봇에게 아무 말이나 한 번 보낸 뒤 다시 눌러 주세요.'); const c=ids[ids.length-1]; $('tgChat').value=c.id; S.push.tgChat=String(c.id); saveLocal(); pn('대화방 번호를 넣었습니다. "폰으로 시험 전송"을 눌러 확인해 보세요.'); }
+    catch(e){ pn('자동으로 찾지 못했습니다. 안내의 다른 방법으로 번호를 확인해 직접 넣어 주세요.'); } });
+  $('pushTest').addEventListener('click',()=>{ for(const [id,k] of [['tgToken','tgToken'],['tgChat','tgChat'],['ntfyTopic','ntfy']]) S.push[k]=$(id).value.trim(); saveLocal(); const n=pushPhone('[차트룸] 시험 전송입니다. 이 메시지가 보이면 폰 알림이 연결된 것입니다.'); pn(n?'보냈습니다. 폰에 메시지가 오는지 확인해 주세요. 몇 초 안에 안 오면 토큰과 번호를 다시 확인해 주세요.':'보낼 곳이 없습니다. 텔레그램 토큰과 대화방 번호, 또는 ntfy 주제를 넣어 주세요.'); });
   renderAlerts();
   $('dDel').addEventListener('click',delSel);
   markTools();
