@@ -165,7 +165,31 @@ dialog fieldset{border:0;padding:0;margin:0 0 14px;display:flex;gap:14px;flex-wr
 dialog legend{padding:0;margin-bottom:4px}
 
 #wtoggle{display:none}
+body{overscroll-behavior:none}
 @media (max-width:760px){
+  .top{gap:6px;padding:6px 8px}
+  .brand,.spacer{display:none}
+  .open{flex:1 1 100%;min-width:0} .open input{flex:1;width:auto;min-width:0} .open select{flex:0 1 auto;min-width:0;max-width:42%} .open button{flex:0 0 auto}
+  .top{min-width:0;max-width:100vw}
+  .seg{flex:1 1 100%;overflow-x:auto;scrollbar-width:none} .seg button{flex:0 0 auto;height:32px;min-width:44px}
+  .top .btn,.top .pill{height:32px}
+  .top .pill{flex:1;min-width:0;overflow:hidden;white-space:nowrap;justify-content:flex-start;padding:0 8px}
+  input,select,textarea{font-size:16px!important}
+  main{flex-direction:column}
+  .tools{order:2;width:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:5px 8px;gap:6px;border-right:0;border-top:1px solid var(--line);flex:0 0 auto;scrollbar-width:none}
+  .tools button{width:40px;height:40px;flex:0 0 auto} .tools svg{width:21px;height:21px}
+  .tools .more{width:18px;height:40px;font-size:11px;transform:rotate(-90deg)}
+  .tools hr{width:0;height:26px;border-top:0;border-left:1px solid var(--line);margin:0 2px;flex:0 0 auto;align-self:center}
+  .grp{margin-left:0;flex:0 0 auto}
+  .fly button{height:38px}
+  .pop{left:8px!important;right:8px;width:auto!important}
+  .sbar{left:6px;right:6px;top:44px;max-width:none}
+  .sbar #dLv{width:100%}
+  .legend{right:70px;font-size:11px} .legend b{font-size:13px}
+  .vbtns{right:70px} .toasts{right:70px;top:44px}
+  .watch{width:min(280px,86vw);box-shadow:-12px 0 30px #0009}
+  .row{padding:11px 6px 11px 12px;grid-template-columns:1fr auto 26px 26px} .row .mv{height:20px;font-size:12px} .row .rm{font-size:20px}
+  .stage>.hint{right:70px;max-width:none}
   .watch{position:absolute;right:0;top:0;bottom:0;z-index:4;display:none}
   .watch.show{display:flex}
   #wtoggle{display:inline-block}
@@ -242,7 +266,7 @@ dialog legend{padding:0;margin-bottom:4px}
     </div>
     <div class="hint" id="hint" hidden></div>
     <div class="toasts" id="toasts" aria-live="assertive"></div>
-    <div class="vbtns"><button class="btn" type="button" id="autoBtn" hidden title="가격 축을 화면에 보이는 봉에 다시 맞춥니다">자동 맞춤</button><button class="btn" type="button" id="latestBtn" hidden title="가장 최근 봉으로 이동합니다">최신 봉으로</button></div>
+    <div class="vbtns"><button class="btn" type="button" id="pathDone" hidden>여기까지 그리기</button><button class="btn" type="button" id="autoBtn" hidden title="가격 축을 화면에 보이는 봉에 다시 맞춥니다">자동 맞춤</button><button class="btn" type="button" id="latestBtn" hidden title="가장 최근 봉으로 이동합니다">최신 봉으로</button></div>
     <div class="msg" id="msg" hidden><div><p id="msgText"></p><button class="btn" id="msgBtn" type="button" hidden>설정 열기</button></div></div>
   </section>
   <aside class="watch" id="watch">
@@ -270,6 +294,15 @@ dialog legend{padding:0;margin-bottom:4px}
       <small>무료 가입 후 발급: <a href="https://finnhub.io/" target="_blank" rel="noopener">finnhub.io</a> · 넣으면 체결될 때마다 바로 움직입니다.</small>
     </div>
     <p><small>코인은 키 없이 바이낸스 공개 시세로 실시간 동작합니다. 키는 이 브라우저에만 저장됩니다.</small></p>
+    <div class="f sync">
+      <label>이 기기의 그림·설정 옮기기</label>
+      <div class="acts l">
+        <button class="btn" type="button" id="expBtn">파일로 내보내기</button>
+        <button class="btn" type="button" id="impBtn">파일에서 가져오기</button>
+        <input type="file" id="impFile" accept=".json,application/json" hidden>
+      </div>
+      <small id="impNote">그림, 관심종목, 지표 설정, 알림, API 키가 파일 하나에 담깁니다. 가져오면 이 기기의 내용이 파일 내용으로 바뀌고, 동기화 중이면 클라우드에도 올라갑니다.</small>
+    </div>
     <div class="f sync">
       <label for="fbCfg">기기 간 동기화 (Firebase)</label>
       <small id="fbStat"></small>
@@ -357,12 +390,12 @@ function ptAt(x,y,raw){ if(raw) return {t:tOfI(iAt(x)),p:pAt(y)}; const i=Math.r
   return {t:tOfI(i),p}; }
 const XY=pt=>[X(iOfT(pt.t)), Y(pt.p)];
 
-function layout(){ const W=cv.clientWidth,H=cv.clientHeight, axW=76, axH=26; const subs=[]; if(S.ind.rsi.on) subs.push('rsi'); if(S.ind.macd.on) subs.push('macd'); if(S.ind.cvd) subs.push('cvd'); if(S.ind.oi) subs.push('oi');
+function layout(){ const W=cv.clientWidth,H=cv.clientHeight, axW=W<520?64:76, axH=26; const subs=[]; if(S.ind.rsi.on) subs.push('rsi'); if(S.ind.macd.on) subs.push('macd'); if(S.ind.cvd) subs.push('cvd'); if(S.ind.oi) subs.push('oi');
   const subH=Math.max(48,Math.min(120,Math.floor((H-axH)*(subs.length>2?0.5/subs.length:0.2)))); let hs=subs.map(k=>Math.max(PANE_MIN,+S.paneH[k]||subH)); const room=Math.max(PANE_MIN*subs.length,H-axH-MAIN_MIN), tot=hs.reduce((a,b)=>a+b,0); if(tot>room) hs=hs.map(h=>Math.max(PANE_MIN,Math.floor(h*room/tot)));   // 창이 작아지면 비율대로 줄인다
   const mainH=Math.max(60,H-axH-hs.reduce((a,b)=>a+b,0)); let y=mainH;
   L={W,H,axW,axH,plotW:Math.max(50,W-axW),main:{y:0,h:mainH},subs:subs.map((k,i)=>{ const o={k,y,h:hs[i]}; y+=hs[i]; return o; })}; }
 const PANE_MIN=32, MAIN_MIN=120; let hoverDiv=-1;
-const divAt=y=>L?L.subs.findIndex(sp=>Math.abs(y-sp.y)<=4):-1;   // 보조 창 위쪽 경계선
+const divAt=y=>L?L.subs.findIndex(sp=>Math.abs(y-sp.y)<=(TOUCH?12:4)):-1;   // 보조 창 위쪽 경계선
 function resize(){ const r=window.devicePixelRatio||1; cv.width=Math.round(cv.clientWidth*r); cv.height=Math.round(cv.clientHeight*r); ctx.setTransform(r,0,0,r,0,0); dirty=true; }
 function resetView(){ layout(); bw=8; end=bars.length-1+6; auto=true; dirty=true; }
 
@@ -459,7 +492,7 @@ function render(){
   if(mouse&&mouse.x<plotW&&mouse.y<H-axH&&!drag?.pan){ const xi=Math.round(iAt(mouse.x)), x=Math.round(X(xi))+.5, y=Math.round(mouse.y)+.5; c.setLineDash([4,4]); c.strokeStyle=C.mute; c.beginPath(); c.moveTo(x,0); c.lineTo(x,H-axH); c.moveTo(0,y); c.lineTo(plotW,y); c.stroke(); c.setLineDash([]);
     if(mouse.y<main.h) axisTag(y,fmtP(pAt(mouse.y)),C.mute,'#0d1016');
     const tl=fmtT(tOfI(xi)), tw=c.measureText(tl).width+14, tx=Math.min(Math.max(x-tw/2,0),plotW-tw); c.fillStyle=C.mute; c.fillRect(tx,H-axH+1,tw,axH-2); c.fillStyle='#0d1016'; c.textAlign='center'; c.fillText(tl,tx+tw/2,H-axH/2); }
-  legend(); if(sel!==sbarSel) syncSbar(); hint(); $('autoBtn').hidden=auto; $('latestBtn').hidden=end>=n-1&&end<=n-1+plotW/bw*0.6;
+  legend(); if(sel!==sbarSel) syncSbar(); hint(); $('autoBtn').hidden=auto; $('pathDone').hidden=!(pending&&T[pending.type].n===0&&pending.pts.length>2); $('latestBtn').hidden=end>=n-1&&end<=n-1+plotW/bw*0.6;
 }
 function hoverI(){ const n=bars.length; if(mouse&&mouse.x<L.plotW){ return Math.min(n-1,Math.max(0,Math.round(iAt(mouse.x)))); } return n-1; }
 let legendHtml='';
@@ -496,7 +529,8 @@ const stat=(a,b)=>`${sg(b.p-a.p)} (${pc(a.p,b.p)}) · ${nbars(a,b)}봉 · ${dur(
 const G={hit:false,mx:0,my:0,found:false};
 function segDist(px,py,ax,ay,bx,by){ const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy; let t=l?((px-ax)*dx+(py-ay)*dy)/l:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(px-ax-t*dx,py-ay-t*dy); }
 function inPoly(ps,x,y){ let r=false; for(let i=0,j=ps.length-1;i<ps.length;j=i++){ const [xi,yi]=ps[i],[xj,yj]=ps[j]; if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi) r=!r; } return r; }
-function seg(x0,y0,x1,y1){ if(G.hit){ if(segDist(G.mx,G.my,x0,y0,x1,y1)<6) G.found=true; return; } ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); }
+let TOUCH=false; const HR=()=>TOUCH?14:6;   // 손가락은 마우스보다 넓게 잡아 준다
+function seg(x0,y0,x1,y1){ if(G.hit){ if(segDist(G.mx,G.my,x0,y0,x1,y1)<HR()) G.found=true; return; } ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke(); }
 function far(x0,y0,x1,y1){ const dx=x1-x0,dy=y1-y0,k=6000/(Math.hypot(dx,dy)||1); return [x1+dx*k,y1+dy*k]; }
 function ray(x0,y0,x1,y1){ const f=far(x0,y0,x1,y1); seg(x0,y0,f[0],f[1]); }
 function both(x0,y0,x1,y1){ const a=far(x1,y1,x0,y0), b=far(x0,y0,x1,y1); seg(a[0],a[1],b[0],b[1]); }
@@ -570,9 +604,9 @@ function shape(d,s,col){ const W=L.plotW, top=L.main.y, bot=L.main.y+L.main.h, P
   } }
 function screenPts(d){ const s=d.pts.map(XY); if((d.type==='long'||d.type==='short')&&s[2]) s[2][0]=s[1][0]; return s; }
 function drawShape(d,active){ const c=ctx, col=d.col||C.accent, w=d.w||1.5, s=screenPts(d); c.save(); c.strokeStyle=col; c.fillStyle=col; c.lineWidth=active?w+0.7:w; c.lineJoin='round'; c.lineCap='round'; G.hit=false; shape(d,s,col); c.setLineDash([]); if(d.alert&&AT.has(d.type)){ c.save(); c.font='10px '+UIF; c.fillStyle=ALC; c.textAlign='left'; c.fillText('알림',s[0][0]+7,s[0][1]+13); c.restore(); }
-  if(active&&d.type!=='brush'){ c.fillStyle=C.bg; c.strokeStyle=col; c.lineWidth=1.5; const hs=d.type==='hline'?[[L.plotW/2,s[0][1]]]:d.type==='vline'?[[s[0][0],L.main.y+L.main.h/2]]:s; for(const [hx,hy] of hs){ c.beginPath(); c.arc(hx,hy,4,0,7); c.fill(); c.stroke(); } } c.restore(); }
+  if(active&&d.type!=='brush'){ c.fillStyle=C.bg; c.strokeStyle=col; c.lineWidth=1.5; const hs=d.type==='hline'?[[L.plotW/2,s[0][1]]]:d.type==='vline'?[[s[0][0],L.main.y+L.main.h/2]]:s; for(const [hx,hy] of hs){ c.beginPath(); c.arc(hx,hy,TOUCH?6:4,0,7); c.fill(); c.stroke(); } } c.restore(); }
 function hitTest(mx,my){ const ds=curDraw(); for(let k=ds.length-1;k>=0;k--){ const d=ds[k], s=screenPts(d);
-    if(d.type!=='brush'&&d.type!=='hline'&&d.type!=='vline') for(let q=0;q<s.length;q++) if(Math.hypot(mx-s[q][0],my-s[q][1])<8) return {d,part:q};
+    if(d.type!=='brush'&&d.type!=='hline'&&d.type!=='vline') for(let q=0;q<s.length;q++) if(Math.hypot(mx-s[q][0],my-s[q][1])<(TOUCH?20:8)) return {d,part:q};
     G.hit=true; G.mx=mx; G.my=my; G.found=false; shape(d,s,d.col||C.accent); G.hit=false; if(G.found) return {d,part:'body'}; }
   return null; }
 function drawMeasure(){ drawShape({type:'dprange',pts:[meas.a,meas.b],col:meas.b.p>=meas.a.p?C.up:C.down,w:1.2},false); }
@@ -642,7 +676,12 @@ function advance(){ const n=T[pending.type].n; if(n===0||pending.pts.length<n) p
 function finishPending(){ if(!pending) return; const d=pending, a=d.pts[0]; pending=null; downAt=null;
   if(d.pts.length>=2&&d.pts.some(q=>q.t!==a.t||q.p!==a.p)){ if(d.type==='long'||d.type==='short'){ const e=a.p, k=Math.abs(d.pts[1].p-e)||e*0.01, sgn=d.type==='long'?1:-1; d.pts[1].p=e+sgn*k; d.pts[2]={t:d.pts[1].t,p:e-sgn*k/2}; } commit(d); }
   setTool('cursor'); }
-cv.addEventListener('pointerdown',e=>{ if(!bars.length||e.button!==0) return; const m=pos(e); cv.setPointerCapture(e.pointerId); mouse=m; dirty=true;
+const PT=new Map(); let pinch=null;
+function endPointer(e){ PT.delete(e.pointerId); if(!pinch) return false; if(PT.size<2){ pinch=null; drag=null; } mouse=null; dirty=true; return true; }
+cv.addEventListener('pointercancel',e=>{ if(!endPointer(e)){ drag=null; mouse=null; dirty=true; } });
+cv.addEventListener('pointerdown',e=>{ if(!bars.length||e.button!==0) return; const m=pos(e); cv.setPointerCapture(e.pointerId); mouse=m; dirty=true; TOUCH=e.pointerType!=='mouse'; PT.set(e.pointerId,m);
+  if(PT.size>=2){ if(PT.size===2){ if(drag&&drag.move&&drag.undone) save(); drag=null; if(pending&&downAt){ pending=null; downAt=null; } if(meas&&!meas.done) meas=null;   // 두 번째 손가락이 닿으면 하던 동작을 접고 확대·축소로 넘어간다
+      const [a,b]=[...PT.values()], mx=(a.x+b.x)/2; pinch={d0:Math.max(24,Math.hypot(a.x-b.x,a.y-b.y)),bw0:bw,idx:iAt(Math.min(mx,L.plotW))}; mouse=null; } return; }
   const inPlot=m.x<L.plotW&&m.y<L.H-L.axH, inMain=inPlot&&m.y<L.main.h;
   { const dv=divAt(m.y); if(dv>=0&&!pending&&!(meas&&!meas.done)){ drag={div:dv,y0:m.y,h0:L.subs.map(sp=>sp.h),main0:L.main.h}; return; } }
   if(e.altKey&&inMain&&tool==='cursor'&&!pending){ const v=pAt(m.y); addAlert(S.symbol,+v.toFixed(v>=100?2:v>=1?4:6)); return; }
@@ -657,7 +696,9 @@ cv.addEventListener('pointerdown',e=>{ if(!bars.length||e.button!==0) return; co
   if(m.y>=L.H-L.axH){ drag={xs:true,x0:m.x,bw0:bw}; return; }
   if(inMain){ const h=hitTest(m.x,m.y); if(h){ sel=h.d; drag={move:true,part:h.part,orig:structuredClone(h.d.pts),i0:iAt(m.x),p0:pAt(m.y)}; return; } }
   sel=null; drag={pan:true,inMain,x0:m.x,y0:m.y,end0:end,pmin0:pmin,pmax0:pmax}; cv.style.cursor='grabbing'; });
-cv.addEventListener('pointermove',e=>{ const m=pos(e); mouse=m; dirty=true; if(!bars.length) return; const my=Math.min(m.y,L.main.h);
+cv.addEventListener('pointermove',e=>{ const m=pos(e); if(PT.has(e.pointerId)) PT.set(e.pointerId,m);
+  if(pinch){ if(PT.size>=2&&bars.length){ const [a,b]=[...PT.values()], mx=Math.min((a.x+b.x)/2,L.plotW); bw=Math.max(1.5,Math.min(60,pinch.bw0*Math.max(24,Math.hypot(a.x-b.x,a.y-b.y))/pinch.d0)); end=clampEnd(pinch.idx+(L.plotW-mx)/bw); maybeMore(); dirty=true; } return; }
+  mouse=m; dirty=true; if(!bars.length) return; const my=Math.min(m.y,L.main.h);
   if(meas&&!meas.done){ meas.b=ptAt(m.x,my); return; }
   if(drag?.brush){ if(pending&&Math.hypot(m.x-drag.lx,m.y-drag.ly)>2){ pending.pts.push(ptAt(m.x,my,true)); drag.lx=m.x; drag.ly=m.y; } return; }
   if(pending){ pending.pts[pending.pts.length-1]=ptAt(m.x,my); return; }
@@ -672,7 +713,7 @@ cv.addEventListener('pointermove',e=>{ const m=pos(e); mouse=m; dirty=true; if(!
   else if(drag.move){ const d=sel; dSide.delete(d); if(!drag.undone){ pushUndo(); drag.undone=true; }
     if(drag.part==='body'){ const di=Math.round(iAt(m.x)-drag.i0), dp=pAt(m.y)-drag.p0; d.pts=drag.orig.map(o=>({t:tOfI(iOfT(o.t)+di),p:o.p+dp})); }
     else { d.pts[drag.part]=ptAt(m.x,my); if((d.type==='long'||d.type==='short')&&d.pts[2]) d.pts[2].t=d.pts[1].t; } } });
-cv.addEventListener('pointerup',e=>{ const m=pos(e);
+cv.addEventListener('pointerup',e=>{ const m=pos(e); if(endPointer(e)) return; if(e.pointerType==='touch'&&!pending&&!(meas&&!meas.done)) mouse=null;   // 손을 떼면 십자선을 지운다
   if(drag?.brush){ drag=null; finishPending(); dirty=true; return; }
   if(pending&&downAt&&Math.hypot(m.x-downAt.x,m.y-downAt.y)>5){ downAt=null; advance(); } else if(pending) downAt=null;
   if((drag?.move&&drag.undone)||drag?.div!=null) save(); drag=null; if(tool==='cursor') cv.style.cursor='crosshair'; dirty=true; });
@@ -825,11 +866,11 @@ function cloudLogin(){ const {au,auth}=CLOUD; if(!au) return; const pr=new au.Go
     if(c==='auth/unauthorized-domain') return cloudSet('err','이 주소가 Firebase에 등록되지 않았습니다. Authentication → 설정 → 승인된 도메인에 "'+location.hostname+'"을 추가해 주세요.'); if(c!=='auth/popup-closed-by-user'&&c!=='auth/cancelled-popup-request') cloudSet('err','로그인하지 못했습니다. ('+(c||e.message)+')'); }); }
 function cloudStop(){ for(const u of CLOUD.unsubs){ try{ u(); }catch(e){} } CLOUD.unsubs=[]; CLOUD.raw={}; CLOUD.synced={}; CLOUD.ready={s:false,d:false}; clearTimeout(CLOUD.timer); }
 function cloudRefs(){ const {fs,db,user}=CLOUD; return {s:fs.doc(db,'users',user.uid,'data','settings'),d:fs.collection(db,'users',user.uid,'drawings'),one:sym=>fs.doc(db,'users',user.uid,'drawings',encodeURIComponent(sym))}; }
-function cloudStart(){ const {fs}=CLOUD, R=cloudRefs(); try{ localStorage.setItem('chartroom.backup',JSON.stringify(S)); }catch(e){}   // 처음 받아오기 전에 이 기기 상태를 따로 남겨 둔다
+function cloudStart(){ const {fs}=CLOUD, R=cloudRefs(); let push=false; try{ push=localStorage.getItem('chartroom.push')==='1'; }catch(e){} let firstS=true, firstD=true; const pushed=()=>{ if(push&&!firstS&&!firstD){ try{ localStorage.removeItem('chartroom.push'); }catch(e){} } }; try{ localStorage.setItem('chartroom.backup',JSON.stringify(S)); }catch(e){}   // 처음 받아오기 전에 이 기기 상태를 따로 남겨 둔다
   const fail=e=>cloudSet('err',(e&&e.code)==='permission-denied'?'저장소 접근이 거부됐습니다. Firestore 규칙을 안내대로 붙여 넣었는지 확인해 주세요.':'동기화가 끊겼습니다. ('+((e&&(e.code||e.message))||e)+')');
-  CLOUD.unsubs.push(fs.onSnapshot(R.s,snap=>{ if(snap.metadata&&snap.metadata.hasPendingWrites) return; const j=snap.exists()?snap.data().json:null;
-    if(typeof j==='string'&&j!==CLOUD.raw['@s']){ CLOUD.raw['@s']=j; try{ applySettings(JSON.parse(j)); }catch(e){} CLOUD.synced['@s']=settingsJSON(); } CLOUD.ready.s=true; cloudQueue(); },fail));
-  CLOUD.unsubs.push(fs.onSnapshot(R.d,snap=>{ snap.docChanges().forEach(ch=>{ if(ch.doc.metadata&&ch.doc.metadata.hasPendingWrites) return; const v=ch.doc.data(), sym=v.sym, j=ch.type==='removed'?'[]':v.json; if(!sym||typeof j!=='string'||j===CLOUD.raw[sym]) return;
+  CLOUD.unsubs.push(fs.onSnapshot(R.s,snap=>{ if(snap.metadata&&snap.metadata.hasPendingWrites) return; const j=snap.exists()?snap.data().json:null; const skip=push&&firstS; firstS=false; pushed();
+    if(!skip&&typeof j==='string'&&j!==CLOUD.raw['@s']){ CLOUD.raw['@s']=j; try{ applySettings(JSON.parse(j)); }catch(e){} CLOUD.synced['@s']=settingsJSON(); } CLOUD.ready.s=true; cloudQueue(); },fail));
+  CLOUD.unsubs.push(fs.onSnapshot(R.d,snap=>{ const skip=push&&firstD; firstD=false; pushed(); if(!skip) snap.docChanges().forEach(ch=>{ if(ch.doc.metadata&&ch.doc.metadata.hasPendingWrites) return; const v=ch.doc.data(), sym=v.sym, j=ch.type==='removed'?'[]':v.json; if(!sym||typeof j!=='string'||j===CLOUD.raw[sym]) return;
       CLOUD.raw[sym]=j; try{ applyDrawings(sym,JSON.parse(j)); }catch(e){} CLOUD.synced[sym]=JSON.stringify(S.drawings[sym]||[]); }); CLOUD.ready.d=true; cloudQueue(); },fail)); }
 function cloudQueue(){ if(!CLOUD||!CLOUD.user) return; clearTimeout(CLOUD.timer); CLOUD.timer=setTimeout(cloudFlush,700); }
 function cloudFlush(){ if(!CLOUD.user||!CLOUD.ready.s||!CLOUD.ready.d) return; const {fs}=CLOUD, R=cloudRefs(), ts=Date.now(), bad=e=>cloudSet('err','저장하지 못했습니다. ('+((e&&(e.code||e.message))||e)+')');
@@ -851,7 +892,7 @@ function buildUI(){
   const fly=$('fly');
   $('tools').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
     if(b.dataset.more){ const g=b.dataset.more; if(!fly.hidden&&fly.dataset.g===g){ fly.hidden=true; return; } const r=b.getBoundingClientRect(), grp=GROUPS.find(x=>x[0]===g); fly.dataset.g=g;
-      fly.innerHTML=`<h3>${grp[1]}</h3>`+grp[2].map(([id,lb])=>`<button type="button" data-pick="${id}" aria-pressed="${lastTool[g]===id}">${lb}</button>`).join(''); fly.hidden=false; fly.style.left=(r.right+8)+'px'; fly.style.top=Math.max(8,Math.min(r.top-6,innerHeight-fly.offsetHeight-8))+'px'; return; }
+      fly.innerHTML=`<h3>${grp[1]}</h3>`+grp[2].map(([id,lb])=>`<button type="button" data-pick="${id}" aria-pressed="${lastTool[g]===id}">${lb}</button>`).join(''); fly.hidden=false; if(innerWidth<=760){ fly.style.left=Math.max(8,Math.min(r.left-20,innerWidth-fly.offsetWidth-8))+'px'; fly.style.top=Math.max(8,r.top-fly.offsetHeight-10)+'px'; } else { fly.style.left=(r.right+8)+'px'; fly.style.top=Math.max(8,Math.min(r.top-6,innerHeight-fly.offsetHeight-8))+'px'; } return; }
     fly.hidden=true;
     if(b.dataset.tool){ setTool(b.dataset.tool); return; }
     if(b.dataset.grp){ setTool(lastTool[b.dataset.grp]); return; }
@@ -872,6 +913,7 @@ function buildUI(){
     editSel(d=>{ if(v.length){ d.lv=v; S.fibdef[d.type]=v.slice(); } else { delete d.lv; delete S.fibdef[d.type]; } }); syncSbar(); });   // 비우면 기본값으로
   $('dLv').addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key==='Escape') e.target.blur(); });
   $('autoBtn').addEventListener('click',()=>{ auto=true; dirty=true; });
+  $('pathDone').addEventListener('click',()=>{ if(pending&&T[pending.type].n===0){ pending.pts.pop(); finishPending(); dirty=true; } });
   $('latestBtn').addEventListener('click',()=>{ end=bars.length-1+6; dirty=true; });
   $('dParts').addEventListener('input',e=>{ const k=e.target.dataset.part; if(k==null) return; editSel(d=>{ (d.lc ||= {})[k]=e.target.value; }); });
   $('dParts').addEventListener('change',e=>{ if(e.target.dataset.part==null) return; styleEditing=false; e.target.blur(); syncSbar(); });
@@ -934,6 +976,10 @@ function buildUI(){
   const openSet=()=>{ $('kTd').value=S.keys.td; $('kFh').value=S.keys.fh; $(S.color==='global'?'colGl':'colKr').checked=true; $('dlg').showModal(); };
   $('setBtn').addEventListener('click',openSet); $('msgBtn').addEventListener('click',openSet); $('setCancel').addEventListener('click',()=>$('dlg').close());
   $('setForm').addEventListener('submit',()=>{ const k={td:$('kTd').value.trim(),fh:$('kFh').value.trim()}; const changed=k.td!==S.keys.td||k.fh!==S.keys.fh; S.keys=k; S.color=$('colGl').checked?'global':'kr'; save(); readColors(); legendHtml=''; if(changed){ FH.sync(); if(parse(S.symbol).mkt==='US') load(); } });
+  $('expBtn').addEventListener('click',()=>{ const a=document.createElement('a'), d=new Date(); a.href=URL.createObjectURL(new Blob([JSON.stringify({app:'chartroom',v:1,state:S})],{type:'application/json'})); a.download=`chartroom-${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}.json`; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000); });
+  $('impBtn').addEventListener('click',()=>$('impFile').click());
+  $('impFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const j=JSON.parse(rd.result), st=j&&j.app==='chartroom'?j.state:null; if(!st||typeof st!=='object'||!st.drawings) throw 0;
+        localStorage.setItem('chartroom.backup',JSON.stringify(S)); localStorage.setItem(KEY,JSON.stringify(st)); localStorage.setItem('chartroom.push','1'); location.reload(); }catch(_){ $('impNote').textContent='차트룸에서 내보낸 파일이 아니거나 읽을 수 없습니다.'; } }; rd.readAsText(f); e.target.value=''; });
   $('fbSave').addEventListener('click',()=>{ const c=parseCfg($('fbCfg').value); if(!c){ $('fbStat').textContent='설정을 읽지 못했습니다. Firebase 화면의 firebaseConfig = { … } 부분을 통째로 붙여 넣어 주세요.'; return; }
     const same=CLOUD.cfg&&CLOUD.cfg.projectId===c.projectId&&CLOUD.cfg.apiKey===c.apiKey; try{ localStorage.setItem(FBKEY,JSON.stringify(c)); }catch(e){} if(CLOUD.app&&!same){ location.reload(); return; } CLOUD.cfg=c; cloudUI(); cloudInit(); });
   $('fbLogin').addEventListener('click',cloudLogin);
