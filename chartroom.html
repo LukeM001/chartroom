@@ -156,6 +156,7 @@ main{flex:1;min-height:0;display:flex}
 .tkg .w .cols{margin-left:auto}
 .tkg .w input[type=number]{width:52px;margin-left:0}
 .tkg .w select{margin-left:0}
+.tkg .btn.w{height:26px;font-size:12px;justify-content:center;color:var(--text)}
 .tfrow{display:flex;gap:6px;margin-bottom:6px}
 .tfrow input[type=number]{width:70px;height:30px;margin:0}
 .tfrow select{height:30px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:0 6px;flex:1}
@@ -362,15 +363,18 @@ function tfParse(tf){ const m=/^(\d+)([mhdw])$/.exec(tf||''); if(!m||+m[1]<1) re
 function tfLabel(tf){ const q=tfParse(tf); return (q.n===1&&(q.u==='d'||q.u==='w')?'':q.n)+UNITLB[q.u]; }
 const DEF_TFS=['1m','5m','15m','1h','4h','1d','1w'];
 const KEY='chartroom.v1';
+const CL_PRESET={ slow:{cMa:'DEMA',cSrc:'close',c:[{a:120,b:150,m:1},{a:240,b:280,m:1},{a:360,b:420,m:1}]}, ripster:{cMa:'EMA',cSrc:'hl2',c:[{a:5,b:12,m:1},{a:34,b:50,m:1},{a:180,b:200,m:1}]} };
+function fixTk(){ const t=S.ind.tk, d=DEF_IND().tk; if(!Array.isArray(t.c)||t.c.length!==3) t.c=d.c; if(!['close','hl2'].includes(t.cSrc)) t.cSrc='close';
+  if(JSON.stringify(t.c)==='[{"a":5,"b":12,"m":1},{"a":34,"b":50,"m":1},{"a":34,"b":50,"m":4}]'&&t.cMa==='DEMA'){ t.c=d.c; t.cSrc='close'; } }   // 첫 버전의 기본값을 쓰던 경우 새 기본값으로
 const DEF_IND=()=>({ ma:[{p:5,on:false},{p:20,on:true},{p:60,on:true},{p:120,on:false},{p:200,on:false}], bb:{on:false,p:20,k:2}, vol:true,
   hma:true, ichi:false, vwap:false, vwapP:'M', vrvp:false, fvg:true, fvgFill:'close', key:true, rsi:{on:false,p:14}, macd:{on:false}, cvd:true, oi:true,
-  tk:{on:false,k1:26,k2:78,cOn:false,cMa:'DEMA',c:[{a:5,b:12,m:1},{a:34,b:50,m:1},{a:34,b:50,m:4}]} });
+  tk:{on:false,k1:26,k2:78,cOn:false,cMa:'DEMA',cSrc:'close',c:[{a:120,b:150,m:1},{a:240,b:280,m:1},{a:360,b:420,m:1}]} });
 const S={ symbol:'BINANCE:BTCUSDT', tf:'1h', tfs:DEF_TFS.slice(), color:'kr', dstyle:{col:'#e8a33d',w:1.5}, magnet:0, fibdef:{}, paneH:{}, watchW:0, push:{tgToken:'',tgChat:'',ntfy:''}, alerts:[], alog:[], alertOpt:{sound:true,desk:false},
   ind:null, col:null,
   watch:['BINANCE:BTCUSDT','BINANCEF:BTCUSDT','BINANCE:ETHUSDT','BINANCE:SOLUSDT','BINANCE:XRPUSDT','US:AAPL','US:NVDA','US:TSLA','DEMO:SAMPLE'],
   keys:{td:'',fh:''}, drawings:{} };
 try{ const j=JSON.parse(localStorage.getItem(KEY)||'null'); if(j&&typeof j==='object'){ for(const k of Object.keys(S)) if(k in j) S[k]=j[k]; } if(!tfParse(S.tf)) S.tf='1h'; S.tfs=(Array.isArray(S.tfs)?S.tfs:[]).filter(tfParse); if(!S.tfs.length) S.tfs=DEF_TFS.slice(); }catch(e){}
-S.ind={...DEF_IND(),...(S.ind&&typeof S.ind==='object'?S.ind:{})}; S.ind.tk={...DEF_IND().tk,...(S.ind.tk&&typeof S.ind.tk==='object'?S.ind.tk:{})}; if(!Array.isArray(S.ind.tk.c)||S.ind.tk.c.length!==3) S.ind.tk.c=DEF_IND().tk.c; while(S.ind.ma.length<5) S.ind.ma.push({p:200,on:false});
+S.ind={...DEF_IND(),...(S.ind&&typeof S.ind==='object'?S.ind:{})}; S.ind.tk={...DEF_IND().tk,...(S.ind.tk&&typeof S.ind.tk==='object'?S.ind.tk:{})}; fixTk(); while(S.ind.ma.length<5) S.ind.ma.push({p:200,on:false});
 const DEF_COL=()=>({ma0:'#e8a33d',ma1:'#a78bfa',ma2:'#4cc3d9',ma3:'#8fd16a',ma4:'#f08a5d',hma0:'#f0524f',hma1:'#f5d547',hma2:'#3fd0e0',bb:'#93a4c4',vwap:'#e879c9',
   ten:'#4c9bf5',kij:'#c96a5b',spa:'#3ecf8e',spb:'#f0524f',chi:'#8fd16a',fvgUp:S.color==='global'?'#2bb48a':'#f0524f',fvgDn:S.color==='global'?'#f0524f':'#3d7ff5',key:'#d9dee8',cl1:'#3d7ff5',cl2:'#c77dff',cl3u:'#3ecf8e',cl3d:'#f0524f',rsi:'#a78bfa',macd:'#4cc3d9',sig:'#e8a33d',cvd:'#8fd16a',oi:'#e8a33d'});
 { const d=DEF_COL(), u=S.col&&typeof S.col==='object'?S.col:{}; for(const k in d) if(/^#[0-9a-f]{6}$/i.test(u[k]||'')) d[k]=u[k]; S.col=d; }
@@ -439,10 +443,11 @@ function hma(c,p){ const h=wma(c,Math.floor(p/2)), f=wma(c,p); return wma(c.map(
 function midHL(p){ p=Math.max(1,Math.round(p)); return bars.map((_,i)=>{ if(i<p-1) return null; let h=-Infinity,l=Infinity; for(let j=i-p+1;j<=i;j++){ if(bars[j].h>h) h=bars[j].h; if(bars[j].l<l) l=bars[j].l; } return (h+l)/2; }); }
 /* 눌림목 구름: 빠른 평균선과 느린 평균선 사이를 칠한다 (공개된 EMA 구름 방식).
    mult가 1보다 크면 지금 주기의 mult배 봉으로 묶어 계산한다. 묶음이 진행 중일 때는 현재 종가를 그 봉의 종가로 본다 */
-function htfMA(type,c,p,mult){ p=Math.max(1,Math.round(p)); const n=c.length, o=new Array(n).fill(null), a=2/(p+1), ms=tfMs()*Math.max(1,mult||1); let e1=null,e2=null,done=[],sum=0,cur=null,last=null;
+function htfMA(type,c,p,mult,src){ p=Math.max(1,Math.round(p)); const n=c.length, o=new Array(n).fill(null), a=2/(p+1), ms=tfMs()*Math.max(1,mult||1); let e1=null,e2=null,done=[],sum=0,cur=null,last=null,bh=0,bl=0; const hl=src==='hl2';
   for(let i=0;i<n;i++){ const k=mult>1?bucket(bars[i].t,ms):i;
     if(cur!==null&&k!==cur){ if(type==='SMA'){ done.push(last); sum+=last; if(done.length>p-1) sum-=done.shift(); } else { e1=e1==null?last:a*last+(1-a)*e1; e2=e2==null?e1:a*e1+(1-a)*e2; } }   // 앞 묶음이 끝났으면 확정
-    cur=k; last=c[i];
+    if(k!==cur){ bh=bars[i].h; bl=bars[i].l; } else { if(bars[i].h>bh) bh=bars[i].h; if(bars[i].l<bl) bl=bars[i].l; }
+    cur=k; last=hl?(bh+bl)/2:c[i];
     if(type==='SMA'){ if(done.length>=p-1) o[i]=(sum+last)/p; }
     else { const f1=e1==null?last:a*last+(1-a)*e1; o[i]=type==='DEMA'?2*f1-(e2==null?f1:a*f1+(1-a)*e2):f1; } }
   return o; }
@@ -458,7 +463,7 @@ function computeInd(){ indDirty=false; const c=bars.map(b=>b.c), n=c.length; IND
     const sig=st<0?m.slice():ema(m.map(v=>v??0),9,st); IND.macd={m,sig,hist:m.map((v,i)=>v!=null&&sig[i]!=null?v-sig[i]:null)}; }
   if(S.ind.hma) IND.hma=[50,100,200].map(p=>hma(c,p));
   if(S.ind.tk.on&&n>3) IND.tk=trendKit(c,S.ind.tk);
-  if(S.ind.tk.cOn&&n>3) IND.cl=S.ind.tk.c.map(q=>({f:htfMA(S.ind.tk.cMa,c,q.a,q.m),s:htfMA(S.ind.tk.cMa,c,q.b,q.m)}));
+  if(S.ind.tk.cOn&&n>3) IND.cl=S.ind.tk.c.map(q=>({f:htfMA(S.ind.tk.cMa,c,q.a,q.m,S.ind.tk.cSrc),s:htfMA(S.ind.tk.cMa,c,q.b,q.m,S.ind.tk.cSrc)}));
   if(S.ind.fvg) IND.fvg=fvgZones(bars.slice(-300),tfLabel(S.tf),S.ind.fvgFill);   // 지금 보고 있는 주기의 FVG만
   if(S.ind.vwap&&n){ const wk=S.ind.vwapP==='W', ps=t=>{ if(wk) return bucket(t,UNIT.w); const d=new Date(t); return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),1); }, p0=ps(bars[0].t), tp=b=>(b.h+b.l+b.c)/3*b.v; let spv=0,svv=0,seeded=bars[0].t===p0;
     if(!seeded&&EX.h1&&EX.h1.length&&EX.h1[0].t<=p0){ seeded=true; for(const b of EX.h1) if(b.t>=p0&&b.t+36e5<=bars[0].t){ spv+=tp(b); svv+=b.v; } }
@@ -921,7 +926,7 @@ function applySettings(o){ if(!o||typeof o!=='object') return;
   if(o.dstyle&&/^#[0-9a-f]{6}$/i.test(o.dstyle.col||'')&&o.dstyle.w>0) S.dstyle={col:o.dstyle.col,w:+o.dstyle.w};
   if([0,1,2].includes(o.magnet)) S.magnet=o.magnet; if(o.fibdef&&typeof o.fibdef==='object') S.fibdef=o.fibdef;
   if(Array.isArray(o.alerts)){ S.alerts=o.alerts.filter(a=>a&&a.sym&&a.price>0); aSide.clear(); }
-  saveLocal(); readColors(); buildTfs(); buildWatch(); syncTickers(); FH.sync(); syncIndPop(); markTools(); renderAlerts(); indDirty=true; dirty=true; legendHtml=''; EX.at=0; loadExtras(); }
+  fixTk(); saveLocal(); readColors(); buildTfs(); buildWatch(); syncTickers(); FH.sync(); syncIndPop(); markTools(); renderAlerts(); indDirty=true; dirty=true; legendHtml=''; EX.at=0; loadExtras(); }
 function applyDrawings(sym,list){ if(!Array.isArray(list)) return; S.drawings[sym]=list.filter(d=>d&&T[d.type]&&Array.isArray(d.pts)&&d.pts.length); if(sym===S.symbol){ if(drag&&drag.move) drag=null; sel=null; dirty=true; } saveLocal(); renderAlerts(); }
 function cloudSet(state,err){ CLOUD.state=state; CLOUD.err=err||''; cloudUI(); }
 function cloudUI(){ const st=$('fbStat'); if(!st) return; const u=CLOUD.user, s=CLOUD.state;
@@ -1057,18 +1062,19 @@ function buildUI(){
     `<h3>보조 창</h3><label><input type="checkbox" id="iRsi" ${i.rsi.on?'checked':''}>RSI${cp('rsi')}<input type="number" id="iRsiP" min="2" max="100" value="${i.rsi.p}" aria-label="RSI 기간"></label>`+ck('iMacd',i.macd.on,'MACD',cp('macd','sig'))+ck('iCvd',i.cvd,'CVD',cp('cvd'))+ck('iOi',i.oi,'OI',cp('oi'))+
     `<h3>추세 묶음</h3>`+ck('iTk',i.tk.on,'컨펌선 · 장기 컨펌선 (계단선)')+
     `<div class="tkg">`+[['k1','컨펌선 기간',1,500,1],['k2','장기 컨펌선 기간',1,1000,1]].map(([k,lb,mn,mx,st])=>`<label>${lb}<input type="number" id="tk_${k}" min="${mn}" max="${mx}" step="${st}" value="${i.tk[k]}"></label>`).join('')+`</div>`+
-    ck('iCl',i.tk.cOn,'눌림목 구름 3개')+`<div class="tkg"><label class="w">평활 방식<select id="cl_ma"><option>DEMA</option><option>EMA</option><option>SMA</option></select></label>`+
+    ck('iCl',i.tk.cOn,'눌림목 구름 3개')+`<div class="tkg"><label class="w">평활 방식<select id="cl_ma"><option>DEMA</option><option>EMA</option><option>SMA</option></select>기준값<select id="cl_src"><option value="close">종가</option><option value="hl2">고가·저가 평균</option></select></label>`+
     [0,1,2].map(k=>`<label class="w">구름 ${k+1}${k<2?cp('cl'+(k+1)):cp('cl3u','cl3d')}<input type="number" id="cl_a${k}" min="1" max="500" value="${i.tk.c[k].a}" title="빠른 기간" aria-label="구름 ${k+1} 빠른 기간"><input type="number" id="cl_b${k}" min="1" max="500" value="${i.tk.c[k].b}" title="느린 기간" aria-label="구름 ${k+1} 느린 기간"><select id="cl_m${k}" title="계산에 쓸 주기 (지금 보는 주기의 몇 배)" aria-label="구름 ${k+1} 주기 배수">${[1,2,3,4,6,8,12,24].map(m=>`<option value="${m}">${m}×</option>`).join('')}</select></label>`).join('')+`</div>`+
-    `<p class="hint">구름 칸은 빠른 기간, 느린 기간, 주기 배수 순서입니다. 4×는 지금 보는 주기의 4배 봉으로 계산합니다 (1시간 차트에서 4시간 기준).</p>`+
+    `<div class="tkg"><button class="btn w" type="button" data-clp="slow">느린 3단 구름으로 (기본)</button><button class="btn w" type="button" data-clp="ripster">Ripster 방식으로 (EMA · 5-12 · 34-50 · 180-200)</button></div><p class="hint">구름 칸은 빠른 기간, 느린 기간, 주기 배수 순서입니다. 긴 기간 구름은 차트를 왼쪽으로 끌어 과거 봉을 더 불러올수록 정확해집니다. 4×는 지금 보는 주기의 4배 봉으로 계산합니다 (1시간 차트에서 4시간 기준).</p>`+
     `<p class="hint">색 네모를 누르면 색을 고를 수 있습니다. 거래량과 VRVP는 캔들 색을 따릅니다.</p><button class="btn" type="button" id="colReset">색상 처음으로</button>`;
   $('iVwapP').value=i.vwapP==='W'?'W':'M'; $('iFvgFill').value=i.fvgFill==='wick'?'wick':'close';
   ip.addEventListener('input',()=>{ i.ma.forEach((m,k)=>{ m.on=$('ma'+k).checked; const q=+$('map'+k).value; if(q>=2&&q<=400) m.p=Math.round(q); }); for(const [id,k] of FLAGS) i[k]=$(id).checked; i.bb.on=$('iBb').checked; i.rsi.on=$('iRsi').checked; const rp=+$('iRsiP').value; if(rp>=2&&rp<=100) i.rsi.p=Math.round(rp); i.macd.on=$('iMacd').checked;
     for(const el of ip.querySelectorAll('[data-col]')) K[el.dataset.col]=el.value; i.vwapP=$('iVwapP').value; i.fvgFill=$('iFvgFill').value;
-    i.tk.cOn=$('iCl').checked; i.tk.cMa=$('cl_ma').value; i.tk.c.forEach((q,k)=>{ for(const f of ['a','b']){ const v=+$('cl_'+f+k).value; if(v>=1&&v<=500) q[f]=Math.round(v); } q.m=+$('cl_m'+k).value||1; });
+    i.tk.cOn=$('iCl').checked; i.tk.cMa=$('cl_ma').value; i.tk.cSrc=$('cl_src').value; i.tk.c.forEach((q,k)=>{ for(const f of ['a','b']){ const v=+$('cl_'+f+k).value; if(v>=1&&v<=500) q[f]=Math.round(v); } q.m=+$('cl_m'+k).value||1; });
     i.tk.on=$('iTk').checked; for(const k of ['k1','k2']){ const el=$('tk_'+k), v=+el.value; if(el.value!==''&&isFinite(v)&&v>=+el.min&&v<=+el.max) i.tk[k]=v; }
     if((i.key&&!EX.levels.length)||(i.vwap&&!EX.h1)) EX.at=0; if(i.oi&&!EX.oi.length) EX.oiAt=0; save(); indDirty=true; dirty=true; legendHtml=''; loadExtras(); });
   $('colReset').addEventListener('click',()=>{ S.col=DEF_COL(); K=S.col; for(const el of ip.querySelectorAll('[data-col]')) el.value=K[el.dataset.col]; save(); dirty=true; legendHtml=''; });
-  const syncCl=()=>{ $('iCl').checked=!!i.tk.cOn; $('cl_ma').value=i.tk.cMa; i.tk.c.forEach((q,k)=>{ $('cl_a'+k).value=q.a; $('cl_b'+k).value=q.b; $('cl_m'+k).value=String(q.m); }); }; syncCl();
+  const syncCl=()=>{ $('iCl').checked=!!i.tk.cOn; $('cl_ma').value=i.tk.cMa; $('cl_src').value=i.tk.cSrc; i.tk.c.forEach((q,k)=>{ $('cl_a'+k).value=q.a; $('cl_b'+k).value=q.b; $('cl_m'+k).value=String(q.m); }); }; syncCl();
+  ip.addEventListener('click',e=>{ const b=e.target.closest('[data-clp]'); if(!b) return; const q=CL_PRESET[b.dataset.clp]; i.tk.cMa=q.cMa; i.tk.cSrc=q.cSrc; i.tk.c=q.c.map(x=>({...x})); i.tk.cOn=true; syncCl(); save(); indDirty=true; dirty=true; });
   syncIndPop=()=>{ syncCl(); $('iTk').checked=!!i.tk.on; for(const k of ['k1','k2']) $('tk_'+k).value=i.tk[k]; i.ma.forEach((m,k)=>{ $('ma'+k).checked=m.on; $('map'+k).value=m.p; }); for(const [id,k] of FLAGS) $(id).checked=!!i[k]; $('iBb').checked=i.bb.on; $('iRsi').checked=i.rsi.on; $('iRsiP').value=i.rsi.p; $('iMacd').checked=i.macd.on; $('iVwapP').value=i.vwapP==='W'?'W':'M'; $('iFvgFill').value=i.fvgFill==='wick'?'wick':'close'; for(const el of ip.querySelectorAll('[data-col]')) el.value=K[el.dataset.col]; };
   $('indBtn').addEventListener('click',()=>{ const r=$('indBtn').getBoundingClientRect(); ip.style.left=Math.max(8,Math.min(r.left,innerWidth-320))+'px'; ip.style.top=(r.bottom+6)+'px'; ip.hidden=!ip.hidden; $('indBtn').setAttribute('aria-expanded',!ip.hidden); });
   addEventListener('pointerdown',e=>{ if(!ip.hidden&&!ip.contains(e.target)&&e.target!==$('indBtn')){ ip.hidden=true; $('indBtn').setAttribute('aria-expanded','false'); } });
